@@ -7,4 +7,5 @@ pub(crate) struct StructContext {
     pub(crate) struct_name: String,
     pub(crate) struct_lifetimes: Vec<LifetimeDef>,
     pub(crate) package: Option<JavaPath>,
+    pub(crate) find_class: bool,
 }

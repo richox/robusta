@@ -1,6 +1,7 @@
 use core::option::Option::{None, Some};
 use core::result::Result::{Err, Ok};
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 use proc_macro_error::{emit_error, emit_warning};
 use quote::ToTokens;
@@ -162,6 +163,7 @@ impl<'ast> Visit<'ast> for StructDeclVisitor<'ast> {
 pub(crate) struct JNIBridgeModule {
     pub(crate) module_decl: ItemMod,
     pub(crate) package_map: BTreeMap<String, Option<JavaPath>>,
+    pub(crate) find_class_set: BTreeSet<String>,
 }
 
 impl Parse for JNIBridgeModule {
@@ -294,6 +296,12 @@ impl Parse for JNIBridgeModule {
             })
             .collect();
 
+        let find_class_set: BTreeSet<String> = bridged_structs
+            .iter()
+            .filter(|s| s.attrs.iter().any(|a| a.path.segments.last().unwrap().ident == "findclass"))
+            .map(|s| s.ident.to_string())
+            .collect();
+
         if !valid_input {
             Err(Error::new(
                 module_decl.span(),
@@ -303,6 +311,7 @@ impl Parse for JNIBridgeModule {
             Ok(JNIBridgeModule {
                 module_decl,
                 package_map,
+                find_class_set,
             })
         }
     }

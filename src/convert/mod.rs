@@ -43,12 +43,13 @@ use std::str::FromStr;
 
 use jni::errors::ErrorKind;
 use jni::JNIEnv;
-use jni::objects::{JObject, JString, JValue};
+use jni::objects::{JClass, JObject, JString, JValue};
 use jni::signature::JavaType;
 use jni::sys::{jboolean, jbyte, jchar, jdouble, jfloat, jint, jlong, jobject, jshort};
 use paste::paste;
 
 pub use robusta_codegen::Signature;
+pub use robusta_codegen::FindClass;
 pub use safe::*;
 pub use unchecked::*;
 pub use field::*;
@@ -302,4 +303,8 @@ impl<'a> TryFrom<JValueWrapper<'a>> for JString<'a> {
             _ => Err(ErrorKind::WrongJValueType("string", value.0.type_name()).into()),
         }
     }
+}
+
+pub trait FindClass<'env: 'borrow, 'borrow> {
+    fn find_class(env: &'borrow JNIEnv<'env>) -> jni::errors::Result<JClass<'env>>;
 }

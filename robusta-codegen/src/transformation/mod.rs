@@ -68,6 +68,8 @@ impl ModTransformer {
                 return node.to_token_stream();
             }
 
+            let find_class = self.module.find_class_set.contains(&struct_name);
+
             let path_lifetimes: BTreeSet<String> = p.path.segments.iter().filter_map(|s: &PathSegment| {
                 if let PathArguments::AngleBracketed(a) = &s.arguments {
                     Some(a.args.iter().filter_map(|g| {
@@ -96,6 +98,7 @@ impl ModTransformer {
                 struct_name,
                 struct_lifetimes,
                 package: struct_package,
+                find_class,
             };
 
             let mut exported_fns_transformer = ExportedMethodTransformer {

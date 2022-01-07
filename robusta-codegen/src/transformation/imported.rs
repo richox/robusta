@@ -128,6 +128,8 @@ impl<'ctx> Fold for ImportedMethodTransformer<'ctx> {
                     .join("/");
                 let java_method_name = to_camel_case(&signature.ident.to_string());
 
+                let find_class = self.struct_context.find_class;
+
                 let input_types_conversions = signature
                     .inputs
                     .iter()
@@ -297,18 +299,28 @@ impl<'ctx> Fold for ImportedMethodTransformer<'ctx> {
                             }
                         }
                     } else {
+                        let desc_class = if find_class {
+                            quote_spanned! { output_type_span =>
+                                Self::find_class(env)?
+                            }
+                        } else {
+                            quote_spanned! { output_type_span =>
+                                #java_class_path
+                            }
+                        };
+
                         match call_type {
                             CallType::Safe(_) => {
                                 if is_constructor {
                                     parse_quote! {{
                                         let env: &'_ ::robusta_jni::jni::JNIEnv<'_> = #env_ident;
-                                        let res = env.new_object(#java_class_path, #java_signature, &[#input_conversions]);
+                                        let res = env.new_object({#desc_class}, #java_signature, &[#input_conversions]);
                                         #return_expr
                                     }}
                                 } else {
                                     parse_quote! {{
                                         let env: &'_ ::robusta_jni::jni::JNIEnv<'_> = #env_ident;
-                                        let res = env.call_static_method(#java_class_path, #java_method_name, #java_signature, &[#input_conversions]);
+                                        let res = env.call_static_method({#desc_class}, #java_method_name, #java_signature, &[#input_conversions]);
                                         #return_expr
                                     }}
                                 }
@@ -317,13 +329,13 @@ impl<'ctx> Fold for ImportedMethodTransformer<'ctx> {
                                 if is_constructor {
                                     parse_quote! {{
                                         let env: &'_ ::robusta_jni::jni::JNIEnv<'_> = #env_ident;
-                                        let res = env.new_object(#java_class_path, #java_signature, &[#input_conversions]).unwrap();
+                                        let res = env.new_object({#desc_class}, #java_signature, &[#input_conversions]).unwrap();
                                         #return_expr
                                     }}
                                 } else {
                                     parse_quote! {{
                                         let env: &'_ ::robusta_jni::jni::JNIEnv<'_> = #env_ident;
-                                        let res = env.call_static_method(#java_class_path, #java_method_name, #java_signature, &[#input_conversions]).unwrap();
+                                        let res = env.call_static_method({#desc_class}, #java_method_name, #java_signature, &[#input_conversions]).unwrap();
                                         #return_expr
                                     }}
                                 }
